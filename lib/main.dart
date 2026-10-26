@@ -1,7 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import 'data/repositories/alert_repository.dart';
 import 'domain/models/stock_alert.dart';
+import 'ui/alerts/view_models/alerts_view_model.dart';
+import 'ui/alerts/widgets/alerts_screen.dart';
 
 void main() {
   runApp(NourShelfApp(repository: InMemoryAlertRepository(demoAlerts)));
@@ -45,18 +49,43 @@ const List<StockAlert> demoAlerts = [
 
 /// The app root.
 ///
-/// TODO(W2): keep this constructor. Create the AlertsViewModel here (once),
-/// call load(), show AlertsScreen, and dispose the view model when this
-/// widget goes away. It probably needs to become a StatefulWidget.
-class NourShelfApp extends StatelessWidget {
+/// Creates [AlertsViewModel] exactly once (in [State.initState]), calls
+/// [AlertsViewModel.load], shows [AlertsScreen], and disposes the view
+/// model in [State.dispose].
+class NourShelfApp extends StatefulWidget {
   const NourShelfApp({super.key, required this.repository});
 
   final AlertRepository repository;
 
   @override
+  State<NourShelfApp> createState() => _NourShelfAppState();
+}
+
+class _NourShelfAppState extends State<NourShelfApp> {
+  late final AlertsViewModel _viewModel;
+
+  @override
+  void initState() {
+    super.initState();
+    _viewModel = AlertsViewModel(repository: widget.repository);
+    unawaited(_viewModel.load());
+  }
+
+  @override
+  void dispose() {
+    _viewModel.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: Scaffold(body: Center(child: Text('TODO: NourShelfApp'))),
+    return MaterialApp(
+      title: 'Nour Shelf',
+      theme: ThemeData(
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
+        useMaterial3: true,
+      ),
+      home: AlertsScreen(viewModel: _viewModel),
     );
   }
 }
